@@ -18,6 +18,7 @@
 #include <climits>
 #include <tinyfiledialogs.h>
 #include <cfloat>
+#include <cmath>
 #include "rayImGui/rlImGui.h"
 const std::string rayver = RAYLIB_VERSION;
 
@@ -75,7 +76,7 @@ int main(int argc, char* argv[]) {
 		throw std::runtime_error("Load sound does not exist");
 	}
 		
-   	Image im = LoadImage("resources/iconc.png"); 
+	Image im = LoadImage("resources/iconc.png"); 
 	ImageFormat(&im, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
 	Texture imt = LoadTextureFromImage(im);
@@ -153,7 +154,10 @@ int main(int argc, char* argv[]) {
 			}
 
 			if(GetMouseWheelMove() != 0 && !io.WantCaptureMouse) {
-				cam.SetZoom(cam.GetZoom() + (GetMouseWheelMove() / 10));
+				if(GetMouseWheelMove() > 0)
+					cam.SetZoom(cam.GetZoom() + (GetMouseWheelMove() / 10) + (cam.zoom / 10));
+				if(GetMouseWheelMove() < 0)
+					cam.SetZoom(cam.GetZoom() + (GetMouseWheelMove() / 10) - (cam.zoom / 10));
 			}
 
 			if(cam.GetZoom() < 0.1) {
@@ -178,7 +182,7 @@ int main(int argc, char* argv[]) {
         BeginDrawing();
             ClearBackground(BLACK);
             cam.BeginMode(); //Drawing functions called during this point are drawn on world
-		   		cam.SetTarget(ply);
+				cam.SetTarget(ply);
 
 				DrawCircleLines(0,0,10/cam.GetZoom(), RED);
 
@@ -187,14 +191,14 @@ int main(int argc, char* argv[]) {
 					int y = ((int)cam.GetTarget().y / gridSpacing) * gridSpacing;
 					//unsigned char zoomer = cam.zoom < 1 ? ftouc(255*cam.zoom) : 255;
 					unsigned char zoomer = getZoomTrans(&cam.zoom, &gridSpacing, &factor);
-					for(int iter = -(screenWidth/gridSpacing/2+2) / cam.GetZoom(); iter <= (screenWidth/gridSpacing/2+2) / cam.GetZoom(); iter++) {
+					for(int iter = -(screenWidth/gridSpacing/2+30) / cam.GetZoom(); iter <= (screenWidth/gridSpacing/2+30) / cam.GetZoom(); iter++) {
 						DrawLine(x + (iter * gridSpacing) + cfg.gridOffset.x,
 						(int)cam.GetTarget().y - screenHeight / cam.GetZoom() / 2,
 						x + (iter*gridSpacing) + cfg.gridOffset.x, 
 						(int)cam.GetTarget().y + screenHeight / cam.GetZoom(), Color{130,130,130,zoomer});
 					}
 				
-					for(int iter = -(screenHeight/gridSpacing/2+2) / cam.GetZoom(); iter <= (screenHeight/gridSpacing/2+2) / cam.GetZoom(); iter++) {
+					for(int iter = -(screenHeight/gridSpacing/2+30) / cam.GetZoom(); iter <= (screenHeight/gridSpacing/2+30) / cam.GetZoom(); iter++) {
 						DrawLine((int)cam.GetTarget().x - screenWidth / cam.GetZoom(),
 								y + (iter * gridSpacing) + cfg.gridOffset.y,
 								(int)cam.GetTarget().x + screenWidth / cam.GetZoom(),
@@ -205,14 +209,14 @@ int main(int argc, char* argv[]) {
 					DrawLine(0, INT_MIN, 0, INT_MAX, RED);
 				}
 				for(RecBundle rec: recs) {
-                    rec.shape.Draw(rec.color);
-                }
+					rec.shape.Draw(rec.color);
+				}
 
 				for(Rectangle rec: overlap) {
 					DrawRectangleRec(rec, overlapColor);
 				}
 
-                mouse(&recs, &overlap, &prevInput, &heldMouse, &ply,&cam, &workingColor, color, &rapidFire, &win, &undo, &gridSpacing
+				mouse(&recs, &overlap, &prevInput, &heldMouse, &ply,&cam, &workingColor, color, &rapidFire, &win, &undo, &gridSpacing
 						,&cfg.gridOffset,&mouseJump, &cfg.currentMCT, io, &changesMade, &cfg.overlapHighlight);
 
 			if(IsKeyDown(KEY_RIGHT_SHIFT)) {
@@ -224,10 +228,18 @@ int main(int argc, char* argv[]) {
 														recs.at(i).shape.GetHeight() + 16*2 / cam.GetZoom()), 
 														1/cam.GetZoom(), 
 														WHITE);
-					DrawText(std::to_string(i).c_str(), recs[i].shape.x,
-						   								recs[i].shape.y - 16/cam.GetZoom(),
-														16 / cam.zoom,
-														WHITE);
+					//DrawText(std::to_string(i).c_str(), recs[i].shape.x,
+														//recs[i].shape.y - 16/cam.GetZoom(),
+														//16 / cam.zoom,
+														//WHITE);
+					
+					DrawRectangleV(Vector2 {recs[i].shape.x, recs[i].shape.y - 16 / cam.zoom},
+							Vector2{(std::to_string(i).size() * 16) / cam.zoom, (16/cam.zoom)}, Color {0,0,0,127});
+					DrawTextEx(GetFontDefault(), std::to_string(i).c_str(), 
+							Vector2 {recs[i].shape.x, recs[i].shape.y-16/cam.GetZoom()}, 
+							16/cam.zoom, 
+							(16/cam.zoom)/10, 
+							WHITE);
 				}
 			}
 
@@ -239,7 +251,7 @@ int main(int argc, char* argv[]) {
 														1/cam.GetZoom(), 
 														WHITE);
 												DrawText("HVR", hoveredRecList->x,
-						   								hoveredRecList->y - 16/cam.GetZoom(),
+												hoveredRecList->y - 16/cam.GetZoom(),
 														16 / cam.zoom,
 														WHITE);
 			}
@@ -249,8 +261,7 @@ int main(int argc, char* argv[]) {
 					int y = ((int) cam.GetScreenToWorld(GetMousePosition()).y / (int)gridSpacing) * gridSpacing + cfg.gridOffset.y;
 					DrawCircleLines(x,y,10 / cam.GetZoom(),WHITE);
 				}
-                tc.DrawPixel(0, 0);                
-	        cam.EndMode();
+				cam.EndMode();
 				rlImGuiBegin();
 
 				if(InfoOn) {
@@ -284,7 +295,7 @@ int main(int argc, char* argv[]) {
 									ImGui::EndTabItem();
 								}
 
-								if(ImGui::BeginTabItem("RecList (LARGE)")) {
+								if(ImGui::BeginTabItem("Rec. List")) {
 									
 									bool ceasePointer = false;
 									bool hoverCheck = false;
@@ -301,7 +312,7 @@ int main(int argc, char* argv[]) {
 											hoveredRecList = &recs[i].shape;
 											hoverCheck = true;
 										} else if(!hoverCheck) {
-											hoveredRecList = NULL; // might bug NOTE: if segfault blame this line
+											hoveredRecList = NULL; 
 										}
 										
 										ImGui::SameLine();
@@ -312,7 +323,7 @@ int main(int argc, char* argv[]) {
 													recs[i].shape.width,
 													recs[i].shape.height);
 											ImGui::SameLine();
-											ImGui::ColorButton("RecList_ColorPrev", RayColor2ImVec(recs[i].color), ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(20,20));
+											ImGui::ColorButton(TextFormat("Rectangle %d", i), RayColor2ImVec(recs[i].color), ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(20,20));
 										}
 
 									}
@@ -329,6 +340,11 @@ int main(int argc, char* argv[]) {
 									#if RESOURCE_USED
 									rlImGuiImageSize(&imt,100,100);
 									#endif
+
+									if(ImGui::Button("Activate Tiny Mode")) {
+										gridSpacing = 1;
+										cam.zoom = 50.0f;
+									}
 									ImGui::EndTabItem();
 								}
 							ImGui::EndTabBar();
@@ -423,7 +439,7 @@ int main(int argc, char* argv[]) {
 											ImGuiColorEditFlags_AlphaBar |
 											ImGuiColorEditFlags_AlphaPreviewHalf
 											)) {
-									workingColor = 	FloatP2RayColor(color);
+									workingColor =	FloatP2RayColor(color);
 								
 								}
 								ImGui::EndTabItem();
@@ -449,7 +465,7 @@ int main(int argc, char* argv[]) {
 						ImGui::EndMenu();
 					}
 					
-        			//ImGui::ColorButton("MyColor##3c", *(ImVec4*)&color, misc_flags | (no_border ? ImGuiColorEditFlags_NoBorder : 0), ImVec2(80, 80));
+					//ImGui::ColorButton("MyColor##3c", *(ImVec4*)&color, misc_flags | (no_border ? ImGuiColorEditFlags_NoBorder : 0), ImVec2(80, 80));
 					ImGui::ColorButton("\0", ImVec4(color[0], color[1], color[2], color[3]), ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(20,25));
 					
 					
@@ -556,7 +572,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	rlImGuiShutdown();
-   	CloseAudioDevice();         	
+	CloseAudioDevice();				
     return 0;
-}           	
-            	
+}				
+				

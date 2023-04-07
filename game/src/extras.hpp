@@ -138,10 +138,10 @@ static void HelpMarker(const char* desc)
 
 float* RayColor2FloatP(Color base) {
 	float ret[4] = {
-		itof(base.r/255),
-		itof(base.g/255),
-		itof(base.b/255),
-		itof(base.a/255),
+		(float)base.r/255.0f,
+		(float)base.g/255.0f,
+		(float)base.b/255.0f,
+		(float)base.a/255.0f,
 	};
 
 	return ret;
@@ -149,10 +149,10 @@ float* RayColor2FloatP(Color base) {
 
 ImVec4 RayColor2ImVec(Color base) {
 	return ImVec4 {
-		itof(base.r/255),
-		itof(base.g/255),
-		itof(base.b/255),
-		itof(base.a/255),
+		(float)base.r/255.0f,
+		(float)base.g/255.0f,
+		(float)base.b/255.0f,
+		(float)base.a/255.0f,
 	};
 }
 
@@ -186,8 +186,7 @@ u64 CountFileLines(std::string filename) {
 }
 
 //yoinked from https://en.cppreference.com/w/cpp/string/basic_string/replace
-std::size_t replace_all(std::string& inout, std::string_view what, std::string_view with)
-{
+std::size_t replace_all(std::string& inout, std::string_view what, std::string_view with) {
     std::size_t count{};
     for (std::string::size_type pos{};
          inout.npos != (pos = inout.find(what.data(), pos, what.length()));
@@ -337,7 +336,7 @@ void mouse(std::vector<RecBundle> *recs, 	//
 		else
 		{
 			// init rectangle making
-			if(*gridSpacing > 1) {	
+			if(*gridSpacing >= 1) {	
 				int x = ((int) cam->GetScreenToWorld(GetMousePosition()).x / (int)*gridSpacing) * *gridSpacing + gridOffset->x; 
 				int y = ((int) cam->GetScreenToWorld(GetMousePosition()).y / (int)*gridSpacing) * *gridSpacing + gridOffset->y;
 				*heldMouse = raylib::Vector2(x,y);
@@ -393,10 +392,10 @@ cam->GetScreenToWorld(GetMousePosition()).GetY() - heldMouse->GetY()));
 				case 1:
 					if(IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) && getHoveredRec(*recs, cam) != -1) {
 						*color = recs->at(getHoveredRec(*recs, cam)).color;
-						imguiColor[0] = (float)color->r/255.0; //cautious casting lmao
-						imguiColor[1] = (float)color->g/255.0;
-						imguiColor[2] = (float)color->b/255.0;
-						imguiColor[3] = (float)color->a/255.0;
+						imguiColor[0] = (float)color->r/255.0f; //cautious casting lmao
+						imguiColor[1] = (float)color->g/255.0f;
+						imguiColor[2] = (float)color->b/255.0f;
+						imguiColor[3] = (float)color->a/255.0f;
 					}
 					break;
 				case 2:

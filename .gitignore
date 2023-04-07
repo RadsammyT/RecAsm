@@ -4,5 +4,7 @@ _bin
 .vs
 game/src/.extras.hpp.swp
 game/src/.main.cpp.swp
+game/src/main.cpp~
+game/src/extras.hpp~
 scenes
 exports
