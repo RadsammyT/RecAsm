@@ -201,7 +201,9 @@ int main(int argc, char* argv[]) {
 								Vector2 { 
 									x + (iter*gridSpacing) + cfg.gridOffset.x, 
 									cam.GetTarget().y + screenHeight / cam.GetZoom()
-									}, Color{130,130,130,zoomer});
+									}, 
+								Color{130,130,130,zoomer}
+								);
 					}
 				
 					for(int iter = -(screenHeight/gridSpacing/2+100) / cam.GetZoom(); iter <= (screenHeight/gridSpacing/2+100) / cam.GetZoom(); iter++) {

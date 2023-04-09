@@ -43,8 +43,7 @@ struct settings {
 
 
 // Struct that handles all rectangles in working world
-struct RecBundle
-{
+struct RecBundle {
 	raylib::Rectangle shape;
 	raylib::Color color;
 };
@@ -663,7 +662,7 @@ bool exportToHeader(std::vector<RecBundle> recs, std::string *resultMessage, dou
 }
 
 bool saveToFile(std::vector<RecBundle> recs, std::string *resultMessage, std::string filename, double* timer, bool* change) {
-	//format each rec like this:
+	//format each rec like this: // ALSO DIOS MIO 3
 	//x,y,w,h,r,g,b,a\n
 	if(filename == "NULL") {
 		TextPopupEx("Save Prompt Cancelled.", timer, resultMessage);
