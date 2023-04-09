@@ -31,7 +31,7 @@ struct settings {
 		bool overlapHighlight;
 		bool toolMainMenu;
 		int currentMCT;
-		bool config[7]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVE USER-DEFINED CONFIGS TO DEFAULT
+		bool config[7]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
 						// 0 = gridOffset
 						// 1 = gridSpace
 						// 2 = gridline

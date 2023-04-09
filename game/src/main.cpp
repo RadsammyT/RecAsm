@@ -191,11 +191,17 @@ int main(int argc, char* argv[]) {
 					int y = ((int)cam.GetTarget().y / gridSpacing) * gridSpacing;
 					//unsigned char zoomer = cam.zoom < 1 ? ftouc(255*cam.zoom) : 255;
 					unsigned char zoomer = getZoomTrans(&cam.zoom, &gridSpacing, &factor);
-					for(int iter = -(screenWidth/gridSpacing/2+100) / cam.GetZoom(); iter <= (screenWidth/gridSpacing/2+100) / cam.GetZoom(); iter++) {
-						DrawLineV(Vector2{x + (iter * gridSpacing) + cfg.gridOffset.x,
-						cam.GetTarget().y - screenHeight / cam.GetZoom() / 2},
-						Vector2 {x + (iter*gridSpacing) + cfg.gridOffset.x, 
-						cam.GetTarget().y + screenHeight / cam.GetZoom()}, Color{130,130,130,zoomer});
+					int gridLimit = (screenWidth/gridSpacing/2+10) / cam.zoom;
+					for(int iter = -gridLimit; iter <= gridLimit; iter++) {
+						DrawLineV(
+								Vector2 { 
+									x + (iter * gridSpacing) + cfg.gridOffset.x,
+									cam.GetTarget().y - screenHeight / cam.GetZoom() / 2
+									},
+								Vector2 { 
+									x + (iter*gridSpacing) + cfg.gridOffset.x, 
+									cam.GetTarget().y + screenHeight / cam.GetZoom()
+									}, Color{130,130,130,zoomer});
 					}
 				
 					for(int iter = -(screenHeight/gridSpacing/2+100) / cam.GetZoom(); iter <= (screenHeight/gridSpacing/2+100) / cam.GetZoom(); iter++) {
@@ -279,7 +285,7 @@ int main(int argc, char* argv[]) {
 								}
 
 								if(ImGui::BeginTabItem("Build")) {
-										ImGui::Text("C++ Standard: %s", std::to_string(__cplusplus).c_str());
+										ImGui::Text("C++ Standard: %d", __cplusplus);
 										ImGui::Text("Raylib Ver: %s", rayver.c_str());
 										ImGui::Text("Build Time: %s %s", __DATE__, __TIME__); // macros are defined on preprocessor run
 									ImGui::EndTabItem();
@@ -288,7 +294,7 @@ int main(int argc, char* argv[]) {
 								if(ImGui::BeginTabItem("Perf")) {
 										ImGui::Text("FPS: %f", 1/GetFrameTime());
 										ImGui::Text("FT (ms): %f", GetFrameTime()*1000);
-										ImGui::Text("FT - 1/60 (ms): %d",(int) ((GetFrameTime()-1.0f/60.0f)*1'000'000'000));
+										ImGui::Text("FT - 1/60 (ns): %d",(int) ((GetFrameTime()-1.0f/60.0f)*1'000'000'000));
 										if(ImGui::Button("Sample from FT-1/60")) {
 											sample = (int) ((GetFrameTime()-1.0f/60.0f)*1'000'000'000);
 										}
