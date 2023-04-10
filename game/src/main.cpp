@@ -205,8 +205,8 @@ int main(int argc, char* argv[]) {
 								Color{130,130,130,zoomer}
 								);
 					}
-				
-					for(int iter = -(screenHeight/gridSpacing/2+100) / cam.GetZoom(); iter <= (screenHeight/gridSpacing/2+100) / cam.GetZoom(); iter++) {
+					gridLimit = (screenHeight/gridSpacing/2+10) / cam.zoom;
+					for(int iter = -gridLimit; iter <= gridLimit; iter++) {
 						DrawLineV(Vector2{cam.GetTarget().x - screenWidth / cam.GetZoom(),
 								y + (iter * gridSpacing) + cfg.gridOffset.y},
 								Vector2{cam.GetTarget().x + screenWidth / cam.GetZoom(),
@@ -253,16 +253,29 @@ int main(int argc, char* argv[]) {
 
 			if(hoveredRecList != NULL) {
 				DrawRectangleLinesEx(raylib::Rectangle(hoveredRecList->x - 16/ cam.GetZoom(), 
-														hoveredRecList->y - 16 / cam.GetZoom(), 
-														hoveredRecList->width + 16*2 / cam.GetZoom(), 
-														hoveredRecList->height + 16*2 / cam.GetZoom()), 
-														1/cam.GetZoom(), 
-														WHITE);
-												DrawTextEx(GetFontDefault(), "HVR", Vector2 { hoveredRecList->x,
-												hoveredRecList->y - 16/cam.GetZoom()},
-														16 / cam.zoom,
-														(16/cam.zoom)/10,
-														WHITE);
+					hoveredRecList->y - 16 / cam.GetZoom(), 
+					hoveredRecList->width + 16*2 / cam.GetZoom(), 
+					hoveredRecList->height + 16*2 / cam.GetZoom()), 
+					1/cam.GetZoom(), 
+					WHITE);
+			
+				DrawRectangleV(
+						Vector2 {
+							hoveredRecList->x,
+							hoveredRecList->y - 16 / cam.zoom
+						},
+						Vector2 {
+							3 * 16 / cam.zoom,
+						   16/cam.zoom	
+						},
+						Color { 0, 0, 0, 127 }
+					);
+				DrawTextEx(GetFontDefault(), "HVR", Vector2 { hoveredRecList->x,
+					hoveredRecList->y - 16/cam.GetZoom()},
+					16 / cam.zoom,
+					(16/cam.zoom)/10,
+					WHITE);
+			
 			}
 
 				if(gridSpacing >= 1 && !io.WantCaptureMouse) {
@@ -308,6 +321,8 @@ int main(int argc, char* argv[]) {
 									
 									bool ceasePointer = false;
 									bool hoverCheck = false;
+
+									ImGui::Text("Click button to remove selected rectangle");
 									for(int i = 0; i < recs.size(); i++) {
 										if(ImGui::Button(TextFormat("%d",i))) { // cuz if all buttons use the same label, all buttons but the one with index 0
 																				// wont work because they have the same FUCKING LABEL THATS IN FACT AN ID
@@ -417,7 +432,7 @@ int main(int argc, char* argv[]) {
 							if(ImGui::MenuItem("Keybind Help")) {
 								tinyfd_messageBox(
 									"Keybind Help",
-									"WASD: Move Camera (Left shift to move fast)\nLeft Click(& Drag): Create Rectangle\nRight Click: Delete Hovered Rectangle\nRight Shift: Highlight?? all rectangles w/ index\nC: Reset Zoom\nB: Toggle Info Menu",
+									"WASD: Move Camera (Left shift to move fast)\nLeft Click(& Drag): Create Rectangle\nRight Click: Delete Hovered Rectangle\nRight Shift: Highlight?? all rectangles w/ index\nC: Reset Zoom\nB: Toggle Info Menu\nR: Undo\nU: Redo",
 									"ok",
 									"info",
 									1		
