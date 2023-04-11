@@ -31,7 +31,7 @@ bool gridOffsetSlider = false;
 float gridOffsetDI = 0.01f;
 float color[4] = {1,1,1,1}; // R G B A
 float ImOverlapColor[4] = {1,0,0,1};
-
+float ImRecListColor[4] = {1,1,1,1};
 Rectangle *hoveredRecList = NULL;
 
 bool changesMade = false;
@@ -42,7 +42,7 @@ raylib::Vector2 ply(0, 0);
 raylib::Color tc(LIGHTGRAY);
 raylib::Color workingColor(255,255,255,255);
 		Color overlapColor = {255,0,0,255};
-
+		Color recListColor = {255,255,255,255};
 float factor = 1;
 
 settings cfg = {
@@ -51,6 +51,7 @@ settings cfg = {
 	true,
 	true,
 	false,
+	0,
 	0,
 	0,
 	{0,0,0,0,0,0,0}
@@ -321,15 +322,43 @@ int main(int argc, char* argv[]) {
 									
 									bool ceasePointer = false;
 									bool hoverCheck = false;
+									ImGui::Combo("RecList Action", &cfg.currentRLA,
+											"Delete Rectangle\0"
+											"Edit Color of Rectangle (See Top Color Tab)\0"
+										);
+									switch(cfg.currentRLA) {
+										case RLA_DELETE:
+												ImGui::Text("Click on button to delete");
+											break;
+										
+										case RLA_COLOR:
 
-									ImGui::Text("Click button to remove selected rectangle");
+        										if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+													recListColor = FloatP2RayColor(ImRecListColor);
+												}
+												//ImGui::ColorButton("Rec List Color", RayColor2ImVec(recListColor), ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(20,20));
+												ImGui::SameLine();
+												ImGui::Text("Click on button to change color");
+											break;
+
+									}
 									for(int i = 0; i < recs.size(); i++) {
 										if(ImGui::Button(TextFormat("%d",i))) { // cuz if all buttons use the same label, all buttons but the one with index 0
 																				// wont work because they have the same FUCKING LABEL THATS IN FACT AN ID
 																				// IMGUI LIED TO ME, IT FUCKING LIED TO ME. SHAME. SHAAAAAAAAAAAAAAAAME.
-											recs.erase(recs.begin() + i);
-											hoveredRecList = NULL;
-											ceasePointer = true;
+											switch(cfg.currentRLA) {
+												case RLA_DELETE:
+														recs.erase(recs.begin() + i);
+														hoveredRecList = NULL;
+														ceasePointer = true;
+													break;
+												
+												case RLA_COLOR:
+													//InfoBox("Unimplemented Function: RLA_COLOR in Rec List Switch case");
+														recs[i].color = recListColor;
+													break;
+											}
+											
 										} 
 										
 										if(ImGui::IsItemHovered() && !ceasePointer) {
@@ -483,6 +512,15 @@ int main(int argc, char* argv[]) {
 								}
 								ImGui::EndTabItem();
 							}
+
+							if(ImGui::BeginTabItem("Rec List Color")) {
+								if(ImGui::ColorPicker4("RLColor", ImRecListColor,
+											ImGuiColorEditFlags_AlphaBar|
+											ImGuiColorEditFlags_AlphaPreviewHalf)) {
+										recListColor = FloatP2RayColor(ImRecListColor);
+								}
+								ImGui::EndTabItem();
+							}
 							ImGui::EndTabBar();					
 						}
 					
@@ -496,10 +534,10 @@ int main(int argc, char* argv[]) {
 					if(ImGui::BeginMenu("Settings")) {
 
 						ImGui::Checkbox("Info Menu", &InfoOn);
+						
 						if(ImGui::BeginTabBar("settings_tab")) {
-
+							
 							if(ImGui::BeginTabItem("Grid")) {
-
 								ImGui::DragInt("Grid Space", &gridSpacing, 1.0f, 0, INT_MAX);
 								ImGui::DragInt("Mouse Jump", &mouseJump, 1.0f, 0, INT_MAX);
 								if(gridOffsetSlider) {

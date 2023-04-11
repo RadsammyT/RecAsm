@@ -31,7 +31,8 @@ struct settings {
 		bool overlapHighlight;
 		bool toolMainMenu;
 		int currentMCT;
-		bool config[7]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
+		int currentRLA;
+		bool config[8]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
 						// 0 = gridOffset
 						// 1 = gridSpace
 						// 2 = gridline
@@ -39,6 +40,7 @@ struct settings {
 						// 4 = currentMCT
 						// 5 = overlapHighlight
 						// 6 = toolMainMenu
+						// 7 = currentRLA
 };
 
 
@@ -59,6 +61,11 @@ enum MiddleClickTools {
 	MDT_CAM_PAN,
 };
 
+enum RecListActions {
+	RLA_DELETE = 0,
+	RLA_COLOR,
+};
+
 inline unsigned char ftouc(float in) {
 	if(in > 255) {
 		return (unsigned char)255;
@@ -77,6 +84,16 @@ inline unsigned char dtouc(double in) {
 
 inline float itof(int in) {
 	return (float)in;
+}
+
+void InfoBox(const char* message) {
+	tinyfd_messageBox(
+				"Quick Message Box",
+				message,
+				"ok",
+				"info",
+				1
+			);
 }
 
 std::string trunFloat(float in) {
