@@ -192,6 +192,7 @@ u64 CountFileLines(std::string filename) {
 	u64 out = 0;
 	std::ifstream file(filename);
 	if(!file.is_open()) {
+		InfoBox("ERROR: Cannot open file to count lines. Check console for file name ");
 		printf("ERROR: Cannot open file \"%s\" to count lines\n", filename.c_str());
 		exit(1);
 	}
@@ -284,7 +285,7 @@ void mouse(std::vector<RecBundle> *recs, 	//
 		raylib::Camera2D *cam, 				//
 		raylib::Color *color, 				//
 		float* imguiColor,					//
-		bool *rapidFire, 					//
+											//bool *rapidFire, 					//
 		raylib::Window *win, 				//
 		std::vector<RecBundle> *undo, 		//
 		int* gridSpacing,					//
@@ -434,40 +435,8 @@ cam->GetScreenToWorld(GetMousePosition()).GetY() - heldMouse->GetY()));
 			}
 		}
 
-		if (IsKeyPressed(KEY_P) )
-		{
-			*rapidFire = !*rapidFire;
-		}
 
 		// Color picking
-		if(*rapidFire ) {
-			if(IsKeyDown(KEY_O)) 
-				color->a++;
-			if(IsKeyDown(KEY_L)) 
-				color->a--;
-			if(IsKeyDown(KEY_I))
-				*mouseJump += 1;
-			if(IsKeyDown(KEY_K))
-				*mouseJump -= 1;
-			if(IsKeyDown(KEY_Y))
-				*gridSpacing += 1;
-			if(IsKeyDown(KEY_H))
-				*gridSpacing -= 1;
-		} else if(!*rapidFire ) {
-			if(IsKeyPressed(KEY_O))
-				color->a++;
-			if(IsKeyPressed(KEY_L))
-				color->a--;
-			if(IsKeyPressed(KEY_I))
-				*mouseJump += 1;
-			if(IsKeyPressed(KEY_K))
-				*mouseJump -= 1;
-			if(IsKeyPressed(KEY_Y))
-				*gridSpacing += 1;
-			if(IsKeyPressed(KEY_H))
-				*gridSpacing -= 1;
-
-		}
 		if(IsKeyPressed(KEY_LEFT)) 
 			SetMousePosition(GetMouseX() - *mouseJump, GetMouseY());
 		if(IsKeyPressed(KEY_RIGHT))

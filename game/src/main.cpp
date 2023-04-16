@@ -106,10 +106,10 @@ int main(int argc, char* argv[]) {
 		
 		Wave load = {
 			LOAD_SOUND_FINAL_FRAME_COUNT,
-            LOAD_SOUND_FINAL_SAMPLE_RATE,
-            LOAD_SOUND_FINAL_SAMPLE_SIZE,
-		    LOAD_SOUND_FINAL_CHANNELS,
-		   LOAD_SOUND_FINAL_DATA	
+			LOAD_SOUND_FINAL_SAMPLE_RATE,
+			LOAD_SOUND_FINAL_SAMPLE_SIZE,
+			LOAD_SOUND_FINAL_CHANNELS,
+			LOAD_SOUND_FINAL_DATA	
 		};
 
 		Sound load_s = LoadSoundFromWave(load);	
@@ -120,10 +120,7 @@ int main(int argc, char* argv[]) {
     win.SetState(FLAG_WINDOW_RESIZABLE);
 	win.SetMinSize(800,450);
 	SetWindowIcon(im);
-	
-    std::vector<RecBundle> recs = {
-        // RecBundle{raylib::Rectangle(100, 100, -100, -100), raylib::Color(255, 255, 255, 255)},
-    };
+    std::vector<RecBundle> recs = {};
 	std::vector<RecBundle> undo;
 	std::vector<Rectangle> overlap;
 
@@ -131,7 +128,7 @@ int main(int argc, char* argv[]) {
 	int mouseJump = 1;
 
     bool prevInput = false; //previous LMB input. false = not down, true = down
-    bool rapidFire = false; // if color picking slides or increments by 1
+							//bool rapidFire = false; // if color picking slides or increments by 1
     raylib::Vector2 heldMouse(0, 0);
     SetTargetFPS(60);
 	#if RESOURCE_USED
@@ -249,7 +246,7 @@ int main(int argc, char* argv[]) {
 					DrawRectangleRec(rec, overlapColor);
 				}
 
-				mouse(&recs, &overlap, &prevInput, &heldMouse, &ply,&cam, &workingColor, color, &rapidFire, &win, &undo, &gridSpacing
+				mouse(&recs, &overlap, &prevInput, &heldMouse, &ply,&cam, &workingColor, color, &win, &undo, &gridSpacing
 						,&cfg.gridOffset,&mouseJump, &cfg.currentMCT, io, &changesMade, &cfg.overlapHighlight);
 
 			if(IsKeyDown(KEY_RIGHT_SHIFT)) {
@@ -357,10 +354,9 @@ int main(int argc, char* argv[]) {
 										
 										case RLA_COLOR:
 
-        										if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_AlphaBar)) {
-													recListColor = FloatP2RayColor(ImRecListColor);
-												}
-												//ImGui::ColorButton("Rec List Color", RayColor2ImVec(recListColor), ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(20,20));
+											if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_AlphaBar)) {
+												recListColor = FloatP2RayColor(ImRecListColor);
+											}
 											break;
 
 									}
@@ -378,9 +374,7 @@ int main(int argc, char* argv[]) {
 													//InfoBox("Unimplemented Function: RLA_COLOR in Rec List Switch case");
 														recs[i].color = recListColor;
 													break;
-
 											}
-											
 										} 
 										
 										if(ImGui::IsItemHovered() && !ceasePointer) {
