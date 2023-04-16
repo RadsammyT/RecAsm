@@ -259,17 +259,6 @@ std::string SaveFilePopup( char const*const* fp, bool sorex = false, int fpl = 1
 	exit(1);
 }
 
-char* TextPopup(char* input, double* c) {
-	*c = MAX;
-	return input;
-}
-
-void TextPopupEx(std::string input, double* c, std::string* str) {
-	*str = input.c_str();
-	*c = MAX;
-	return;
-}
-
 // -1 == cursor not hovering on a rectangle
 int getHoveredRec(std::vector<RecBundle> recs, raylib::Camera2D *cam, bool reverse = false) {
 	raylib::Vector2 temp = cam->GetScreenToWorld(GetMousePosition());
@@ -630,7 +619,6 @@ bool saveConfig(settings *cfg) {
 bool exportToHeader(std::vector<RecBundle> recs, std::string *resultMessage, double* timer, std::string fileout, int exType = EXPORT_CPP_VECTOR)
 {
 	if(fileout == "NULL") {
-		TextPopupEx("Export Prompt Cancelled.", timer, resultMessage);
 		return false;
 	}
 	std::string filteredout = filterFile(fileout);
@@ -682,7 +670,6 @@ bool saveToFile(std::vector<RecBundle> recs, std::string *resultMessage, std::st
 	//format each rec like this:
 	//x,y,w,h,r,g,b,a\n
 	if(filename == "NULL") {
-		TextPopupEx("Save Prompt Cancelled.", timer, resultMessage);
 		return false;
 	} // DIOS MIO 2
 	std::ofstream f;
@@ -709,7 +696,6 @@ bool saveToFile(std::vector<RecBundle> recs, std::string *resultMessage, std::st
 
 bool loadFromFile(std::vector<RecBundle>* recs, std::string* resultMessage, std::string file, double* timer) {
 	if(file == "NULL") {
-		TextPopupEx("Load Prompt Cancelled.", timer, resultMessage);
 		return false;
 	}
 	
@@ -731,7 +717,6 @@ bool loadFromFile(std::vector<RecBundle>* recs, std::string* resultMessage, std:
 					) == 0
 		) {
 			
-			TextPopupEx("Load Prompt Cancelled.", timer, resultMessage);
 			return false;
 		}
 	}

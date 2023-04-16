@@ -19,7 +19,10 @@
 #include <tinyfiledialogs.h>
 #include <cfloat>
 #include <cmath>
+#include <res_header/small_icon.h>
+#include <res_header/load_sound_final.h>
 #include "rayImGui/rlImGui.h"
+
 const std::string rayver = RAYLIB_VERSION;
 
 int screenWidth = 800*1;
@@ -84,13 +87,39 @@ int main(int argc, char* argv[]) {
 	//icon image
 	raylib::Sound load("resources/Load.wav");
 	
+	#else
+		TraceLog(LOG_INFO, "Attempting to load icon image...");
+		//Image im = LoadImageFromMemory(".png", SMALLPNG_DATA, 16384);
+		
+		Image im = {
+			SMALL_ICON_DATA,
+			SMALL_ICON_WIDTH,
+			SMALL_ICON_HEIGHT,
+			1,
+			SMALL_ICON_FORMAT	
+		};
+
+		ImageFormat(&im, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+		TraceLog(LOG_INFO, "Process either finished or failed");
+
+		TraceLog(LOG_INFO, "Attempting to load wave from header");
+		
+		Wave load = {
+			LOAD_SOUND_FINAL_FRAME_COUNT,
+            LOAD_SOUND_FINAL_SAMPLE_RATE,
+            LOAD_SOUND_FINAL_SAMPLE_SIZE,
+		    LOAD_SOUND_FINAL_CHANNELS,
+		   LOAD_SOUND_FINAL_DATA	
+		};
+
+		Sound load_s = LoadSoundFromWave(load);	
+
+		TraceLog(LOG_INFO, "Wave loading concluded");
 	#endif
 	raylib::Camera2D cam(raylib::Vector2(screenWidth/2,screenHeight/2), ply);
     win.SetState(FLAG_WINDOW_RESIZABLE);
 	win.SetMinSize(800,450);
-	#if RESOURCE_USED
 	SetWindowIcon(im);
-	#endif
 	
     std::vector<RecBundle> recs = {
         // RecBundle{raylib::Rectangle(100, 100, -100, -100), raylib::Color(255, 255, 255, 255)},
@@ -105,8 +134,10 @@ int main(int argc, char* argv[]) {
     bool rapidFire = false; // if color picking slides or increments by 1
     raylib::Vector2 heldMouse(0, 0);
     SetTargetFPS(60);
-	#if RESOUCE_USED
+	#if RESOURCE_USED
 	load.Play();
+	#else
+	PlaySound(load_s);
 	#endif
     while (!win.ShouldClose()) // Detect window close button or ESC key
     {
@@ -116,13 +147,6 @@ int main(int argc, char* argv[]) {
 			cam.SetOffset(raylib::Vector2(screenWidth/2, screenHeight/2));
 		}
 
-
-
-        current -= GetFrameTime();
-        if(current < 0) {
-            current = MAX;
-            resultMessage = "";
-        }
 		if(!io.WantCaptureKeyboard) {
 		
 		
@@ -324,7 +348,7 @@ int main(int argc, char* argv[]) {
 									bool hoverCheck = false;
 									ImGui::Combo("RecList Action", &cfg.currentRLA,
 											"Delete Rectangle\0"
-											"Edit Color of Rectangle (See Top Color Tab)\0"
+											"Edit Color of Rectangle\0"
 										);
 									switch(cfg.currentRLA) {
 										case RLA_DELETE:
@@ -333,19 +357,16 @@ int main(int argc, char* argv[]) {
 										
 										case RLA_COLOR:
 
-        										if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+        										if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_AlphaBar)) {
 													recListColor = FloatP2RayColor(ImRecListColor);
 												}
 												//ImGui::ColorButton("Rec List Color", RayColor2ImVec(recListColor), ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(20,20));
-												ImGui::SameLine();
-												ImGui::Text("Click on button to change color");
 											break;
 
 									}
 									for(int i = 0; i < recs.size(); i++) {
-										if(ImGui::Button(TextFormat("%d",i))) { // cuz if all buttons use the same label, all buttons but the one with index 0
-																				// wont work because they have the same FUCKING LABEL THATS IN FACT AN ID
-																				// IMGUI LIED TO ME, IT FUCKING LIED TO ME. SHAME. SHAAAAAAAAAAAAAAAAME.
+										if(ImGui::Button(TextFormat("%d",i))) {
+																				
 											switch(cfg.currentRLA) {
 												case RLA_DELETE:
 														recs.erase(recs.begin() + i);
@@ -357,6 +378,7 @@ int main(int argc, char* argv[]) {
 													//InfoBox("Unimplemented Function: RLA_COLOR in Rec List Switch case");
 														recs[i].color = recListColor;
 													break;
+
 											}
 											
 										} 
@@ -512,15 +534,7 @@ int main(int argc, char* argv[]) {
 								}
 								ImGui::EndTabItem();
 							}
-
-							if(ImGui::BeginTabItem("Rec List Color")) {
-								if(ImGui::ColorPicker4("RLColor", ImRecListColor,
-											ImGuiColorEditFlags_AlphaBar|
-											ImGuiColorEditFlags_AlphaPreviewHalf)) {
-										recListColor = FloatP2RayColor(ImRecListColor);
-								}
-								ImGui::EndTabItem();
-							}
+							
 							ImGui::EndTabBar();					
 						}
 					
