@@ -30,9 +30,11 @@ struct settings {
 		bool tooltip;
 		bool overlapHighlight;
 		bool toolMainMenu;
+		bool showOrigin;
 		int currentMCT;
 		int currentRLA;
-		bool config[8]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
+
+		bool config[9]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
 						// 0 = gridOffset
 						// 1 = gridSpace
 						// 2 = gridline
@@ -41,6 +43,7 @@ struct settings {
 						// 5 = overlapHighlight
 						// 6 = toolMainMenu
 						// 7 = currentRLA
+						// 8 = showOrigin
 };
 
 
@@ -64,7 +67,20 @@ enum MiddleClickTools {
 enum RecListActions {
 	RLA_DELETE = 0,
 	RLA_COLOR,
+	RLA_MOVE,
 };
+
+inline bool recBothNeg(Rectangle *in) {
+	return (in->width < 0 && in->height < 0);
+}
+
+inline bool recSizeZero(Rectangle *in) {
+	return (in->width == 0 || in->height == 0);
+}
+
+inline bool recXor(Rectangle *in) {
+	return (in->width < 0 && in->height > 0) || (in->width > 0 && in->height < 0);
+}
 
 inline unsigned char ftouc(float in) {
 	if(in > 255) {
@@ -335,7 +351,7 @@ void mouse(std::vector<RecBundle> *recs, 	//
 				*change = true;
 				recs->push_back(RecBundle{temp, *color});
 				if(*highlight)
-				*overlap = getCollidingRectangles(*recs);
+					*overlap = getCollidingRectangles(*recs);
 			}
 			*heldMouse = cam->GetScreenToWorld(GetMousePosition());
 		}
@@ -435,7 +451,6 @@ cam->GetScreenToWorld(GetMousePosition()).GetY() - heldMouse->GetY()));
 			}
 		}
 
-
 		// Color picking
 		if(IsKeyPressed(KEY_LEFT)) 
 			SetMousePosition(GetMouseX() - *mouseJump, GetMouseY());
@@ -514,46 +529,53 @@ bool loadConfig(std::string config,
 				settings->gridOffset.y = stof(line);
 			}
 
-			if(line.starts_with("s")) {
-				line.erase(0,1);
+			if(line.starts_with("gridSpace ")) {
+				line.erase(0,10);
 				TraceLog(LOG_INFO, "gridSpace Found");
 				settings->config[1] = true;
 				settings->gridSpace = stoi(line);
 			}
 
-			if(line.starts_with("l")) {
-				line.erase(0,1);
+			if(line.starts_with("gridLine ")) {
+				line.erase(0,9);
 				TraceLog(LOG_INFO, "gridLine Found");
 				settings->config[2] = true;
 				settings->gridLine = stoi(line);
 			}
 
-			if(line.starts_with("tooltip")) {
-				line.erase(0,7); 
+			if(line.starts_with("tooltip ")) {
+				line.erase(0,8); 
 				TraceLog(LOG_INFO, "tooltip Found");
 				settings->config[3] = true;
 				settings->tooltip = stoi(line);
 			}
 
-			if(line.starts_with("mct")) {
-				line.erase(0,3);
+			if(line.starts_with("mct ")) {
+				line.erase(0,4);
 				TraceLog(LOG_INFO, "Middle Click Tool Found");
 				settings->config[4] = true;
 				settings->currentMCT = stoi(line);
 			}
 
-			if(line.starts_with("hor")) {
-				line.erase(0,3);
+			if(line.starts_with("hor ")) {
+				line.erase(0,4);
 				TraceLog(LOG_INFO, "overlapHighLight Found");
 				settings->config[5] = true;
 				settings->overlapHighlight = stoi(line);
 			}
 
-			if(line.starts_with("toolMainMenu")) {
-				line.erase(0,12);
+			if(line.starts_with("toolMainMenu ")) {
+				line.erase(0,13);
 				TraceLog(LOG_INFO, "Tool Main Menu Found");
 				settings->config[6] = true;
 				settings->toolMainMenu = stoi(line);
+			}
+
+			if(line.starts_with("grid_origin ")) {
+				line.erase(0,12);
+				TraceLog(LOG_INFO, "Show Origin Found");
+				settings->config[8] = true;
+				settings->showOrigin = stoi(line);
 			}
 		}
 
@@ -571,9 +593,9 @@ bool saveConfig(settings *cfg) {
 		f << "oy " << cfg->gridOffset.y << "\n";
 	}
 	if(cfg->config[1])
-		f << "s " << cfg->gridSpace << "\n";
+		f << "gridSpace " << cfg->gridSpace << "\n";
 	if(cfg->config[2])
-		f << "l " << cfg->gridLine << "\n";
+		f << "gridLine " << cfg->gridLine << "\n";
 	if(cfg->config[3])
 		f << "tooltip " << cfg->tooltip << "\n";
 	if(cfg->config[4])
@@ -582,6 +604,9 @@ bool saveConfig(settings *cfg) {
 		f << "hor " << cfg->overlapHighlight << "\n";
 	if(cfg->config[6])
 		f << "toolMainMenu " << cfg->toolMainMenu << "\n";
+
+	if(cfg->config[8])
+		f << "grid_origin " << cfg->showOrigin << "\n";
 	return false;
 }
 

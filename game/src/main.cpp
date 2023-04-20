@@ -3,7 +3,7 @@
  *	By RadsammyT
  *	IMPORTANT: C++ Standard must be C++20, otherwise RecAsm won't compile!
  *	cuz std library sh*t lmao
- */
+ */ 
 
 #define RESOURCE_USED 0
 #define RAYGUI_IMPLEMENTATION
@@ -55,6 +55,7 @@ settings cfg = {
 	true,
 	false,
 	0,
+	1,
 	0,
 	0,
 	{0,0,0,0,0,0,0}
@@ -120,11 +121,10 @@ int main(int argc, char* argv[]) {
     win.SetState(FLAG_WINDOW_RESIZABLE);
 	win.SetMinSize(800,450);
 	SetWindowIcon(im);
-    std::vector<RecBundle> recs = {};
+    std::vector<RecBundle> recs;
 	std::vector<RecBundle> undo;
 	std::vector<Rectangle> overlap;
 
-	int gridSpacing = 50;	
 	int mouseJump = 1;
 
     bool prevInput = false; //previous LMB input. false = not down, true = down
@@ -205,38 +205,39 @@ int main(int argc, char* argv[]) {
             ClearBackground(BLACK);
             cam.BeginMode(); //Drawing functions called during this point are drawn on world
 				cam.SetTarget(ply);
+				if(cfg.showOrigin)
+					DrawCircleLines(0,0,10/cam.GetZoom(), RED);
 
-				DrawCircleLines(0,0,10/cam.GetZoom(), RED);
-
-				if(gridSpacing != 0 && cfg.gridLine) { 
-					int x = ((int)cam.GetTarget().x / gridSpacing) * gridSpacing;
-					int y = ((int)cam.GetTarget().y / gridSpacing) * gridSpacing;
+				if(cfg.gridSpace != 0 && cfg.gridLine) { 
+					int x = ((int)cam.GetTarget().x / cfg.gridSpace) * cfg.gridSpace;
+					int y = ((int)cam.GetTarget().y / cfg.gridSpace) * cfg.gridSpace;
 					//unsigned char zoomer = cam.zoom < 1 ? ftouc(255*cam.zoom) : 255;
-					unsigned char zoomer = getZoomTrans(&cam.zoom, &gridSpacing, &factor);
-					int gridLimit = (screenWidth/gridSpacing/2+10) / cam.zoom;
+					unsigned char zoomer = getZoomTrans(&cam.zoom, &cfg.gridSpace, &factor);
+					int gridLimit = (screenWidth/cfg.gridSpace/2+10) / cam.zoom;
 					for(int iter = -gridLimit; iter <= gridLimit; iter++) {
 						DrawLineV(
 								Vector2 { 
-									x + (iter * gridSpacing) + cfg.gridOffset.x,
+									x + (iter * cfg.gridSpace) + cfg.gridOffset.x,
 									cam.GetTarget().y - screenHeight / cam.GetZoom() / 2
 									},
 								Vector2 { 
-									x + (iter*gridSpacing) + cfg.gridOffset.x, 
+									x + (iter*cfg.gridSpace) + cfg.gridOffset.x, 
 									cam.GetTarget().y + screenHeight / cam.GetZoom()
 									}, 
 								Color{130,130,130,zoomer}
 								);
 					}
-					gridLimit = (screenHeight/gridSpacing/2+10) / cam.zoom;
+					gridLimit = (screenHeight/cfg.gridSpace/2+10) / cam.zoom;
 					for(int iter = -gridLimit; iter <= gridLimit; iter++) {
 						DrawLineV(Vector2{cam.GetTarget().x - screenWidth / cam.GetZoom(),
-								y + (iter * gridSpacing) + cfg.gridOffset.y},
+								y + (iter * cfg.gridSpace) + cfg.gridOffset.y},
 								Vector2{cam.GetTarget().x + screenWidth / cam.GetZoom(),
-								y + (iter * gridSpacing) + cfg.gridOffset.y}, Color{130,130,130,zoomer});
+								y + (iter * cfg.gridSpace) + cfg.gridOffset.y}, Color{130,130,130,zoomer});
 					}
-
-					DrawLine(INT_MIN, 0, INT_MAX, 0, RED);
-					DrawLine(0, INT_MIN, 0, INT_MAX, RED);
+					if(cfg.showOrigin) {
+						DrawLine(INT_MIN, 0, INT_MAX, 0, RED);
+						DrawLine(0, INT_MIN, 0, INT_MAX, RED);
+					}
 				}
 				for(RecBundle rec: recs) {
 					rec.shape.Draw(rec.color);
@@ -246,7 +247,7 @@ int main(int argc, char* argv[]) {
 					DrawRectangleRec(rec, overlapColor);
 				}
 
-				mouse(&recs, &overlap, &prevInput, &heldMouse, &ply,&cam, &workingColor, color, &win, &undo, &gridSpacing
+				mouse(&recs, &overlap, &prevInput, &heldMouse, &ply,&cam, &workingColor, color, &win, &undo, &cfg.gridSpace
 						,&cfg.gridOffset,&mouseJump, &cfg.currentMCT, io, &changesMade, &cfg.overlapHighlight);
 
 			if(IsKeyDown(KEY_RIGHT_SHIFT)) {
@@ -300,9 +301,9 @@ int main(int argc, char* argv[]) {
 			
 			}
 
-				if(gridSpacing >= 1 && !io.WantCaptureMouse) {
-					int x = ((int) cam.GetScreenToWorld(GetMousePosition()).x / (int)gridSpacing) * gridSpacing + cfg.gridOffset.x; 
-					int y = ((int) cam.GetScreenToWorld(GetMousePosition()).y / (int)gridSpacing) * gridSpacing + cfg.gridOffset.y;
+				if(cfg.gridSpace >= 1 && !io.WantCaptureMouse) {
+					int x = ((int) cam.GetScreenToWorld(GetMousePosition()).x / (int)cfg.gridSpace) * cfg.gridSpace + cfg.gridOffset.x; 
+					int y = ((int) cam.GetScreenToWorld(GetMousePosition()).y / (int)cfg.gridSpace) * cfg.gridSpace + cfg.gridOffset.y;
 					DrawCircleLines(x,y,10 / cam.GetZoom(),WHITE);
 				}
 				cam.EndMode();
@@ -318,6 +319,7 @@ int main(int argc, char* argv[]) {
 										ImGui::Text("Mouse Y (World): %f", cam.GetScreenToWorld(GetMousePosition()).y);
 										ImGui::Text("Cam X (World): %f", cam.target.x);
 										ImGui::Text("Cam Y (World): %f", cam.target.y);
+										ImGui::DragFloat2("Cam World:", &ply.x, 1.0f/cam.zoom);
 									ImGui::EndTabItem();
 								}
 
@@ -353,10 +355,9 @@ int main(int argc, char* argv[]) {
 											break;
 										
 										case RLA_COLOR:
-
-											if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_AlphaBar)) {
-												recListColor = FloatP2RayColor(ImRecListColor);
-											}
+												if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_AlphaBar)) {
+													recListColor = FloatP2RayColor(ImRecListColor);
+												}
 											break;
 
 									}
@@ -387,12 +388,39 @@ int main(int argc, char* argv[]) {
 										ImGui::SameLine();
 
 										if(!ceasePointer) {
-											ImGui::Text("X:%f, Y:%f, W:%f, H:%f", i, recs[i].shape.x,
-													recs[i].shape.y,
-													recs[i].shape.width,
-													recs[i].shape.height);
+											//ImGui::Text("X:%f, Y:%f, W:%f, H:%f", i, recs[i].shape.x,
+													//recs[i].shape.y,
+													//recs[i].shape.width,
+													//recs[i].shape.height);
+											ImGui::DragFloat4(TextFormat("##DRAG_REC_%d", i), &recs[i].shape.x, 
+														cfg.gridSpace != 0 ? (float) cfg.gridSpace : 0.001f
+													);
+											if(ImGui::IsItemHovered()) {
+												hoveredRecList = &recs[i].shape;
+												hoverCheck = true;
+											} else if(!hoverCheck) {
+												hoveredRecList = NULL; 
+											}
 											ImGui::SameLine();
 											ImGui::ColorButton(TextFormat("Rectangle %d", i), RayColor2ImVec(recs[i].color), ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(20,20));
+											if(recXor(&recs[i].shape) || recSizeZero(&recs[i].shape)) {
+												ImGui::SameLine();
+												ImGui::TextColored(RayColor2ImVec(RED), "ERROR");
+												ImGui::SameLine();
+												if(recXor(&recs[i].shape))
+													HelpMarker("The Width and Height have differing signs, which will introduce rendering errors. The Rectangle may render incorrectly or not render at all.");
+												if(recSizeZero(&recs[i].shape))
+													HelpMarker("Either the Width or Height are zero. The Rectangle will not render. ");
+											}
+
+											if(recBothNeg(&recs[i].shape)) {
+												ImGui::SameLine();
+												ImGui::TextColored(RayColor2ImVec(YELLOW), "WARNING");
+												ImGui::SameLine();
+												
+												if(recBothNeg(&recs[i].shape))
+													HelpMarker("Both Width and Height signs are negative.");
+											}
 										}
 
 									}
@@ -403,7 +431,7 @@ int main(int argc, char* argv[]) {
 								if(ImGui::BeginTabItem("Etc.")) {
 									
 									ImGui::Text("Cam Zoom: %.2f", cam.zoom);
-									ImGui::Text("Zoom Transparency: %d", getZoomTrans(&cam.zoom, &gridSpacing, &factor));
+									ImGui::Text("Zoom Transparency: %d", getZoomTrans(&cam.zoom, &cfg.gridSpace, &factor));
 									ImGui::SliderFloat("Zoom Factor", &factor, 0.01, 10);				
 			
 									#if RESOURCE_USED
@@ -411,7 +439,7 @@ int main(int argc, char* argv[]) {
 									#endif
 
 									if(ImGui::Button("Activate Tiny Mode")) {
-										gridSpacing = 1;
+										cfg.gridSpace = 1;
 										cam.zoom = 50.0f;
 									}
 									ImGui::EndTabItem();
@@ -546,17 +574,18 @@ int main(int argc, char* argv[]) {
 						if(ImGui::BeginTabBar("settings_tab")) {
 							
 							if(ImGui::BeginTabItem("Grid")) {
-								ImGui::DragInt("Grid Space", &gridSpacing, 1.0f, 0, INT_MAX);
+								ImGui::DragInt("Grid Space", &cfg.gridSpace, 1.0f, 0, INT_MAX);
 								ImGui::DragInt("Mouse Jump", &mouseJump, 1.0f, 0, INT_MAX);
 								if(gridOffsetSlider) {
-									ImGui::SliderFloat("Grid Offset X", &cfg.gridOffset.x, 0, gridSpacing);
-									ImGui::SliderFloat("Grid Offset Y", &cfg.gridOffset.y, 0, gridSpacing);
+									ImGui::SliderFloat("Grid Offset X", &cfg.gridOffset.x, 0, cfg.gridSpace);
+									ImGui::SliderFloat("Grid Offset Y", &cfg.gridOffset.y, 0, cfg.gridSpace);
 								} else {
-									ImGui::DragFloat("Grid Offset X", &cfg.gridOffset.x, gridOffsetDI, 0, gridSpacing);
-									ImGui::DragFloat("Grid Offset Y", &cfg.gridOffset.y, gridOffsetDI, 0, gridSpacing);
+									ImGui::DragFloat("Grid Offset X", &cfg.gridOffset.x, gridOffsetDI, 0, cfg.gridSpace);
+									ImGui::DragFloat("Grid Offset Y", &cfg.gridOffset.y, gridOffsetDI, 0, cfg.gridSpace);
 								}
 								
 								ImGui::Checkbox("Grid Outline", &cfg.gridLine);
+								ImGui::Checkbox("Grid Origin", &cfg.showOrigin);
 								ImGui::EndTabItem();
 							}
 							if(ImGui::BeginTabItem("Tools")) {
@@ -587,6 +616,7 @@ int main(int argc, char* argv[]) {
 								ImGui::Checkbox("Save Overlap Highlight", &cfg.config[5]);
 								ImGui::Checkbox("Save Middle Click Tool", &cfg.config[4]);
 								ImGui::Checkbox("Save Tool Main Menu", &cfg.config[6]);
+								ImGui::Checkbox("Save Grid Origin", &cfg.config[8]);
 								if(ImGui::Button("Save Config to Default")) {
 									saveConfig(&cfg);
 								}
