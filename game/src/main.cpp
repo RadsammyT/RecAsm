@@ -35,7 +35,10 @@ float gridOffsetDI = 0.01f;
 float color[4] = {1,1,1,1}; // R G B A
 float ImOverlapColor[4] = {1,0,0,1};
 float ImRecListColor[4] = {1,1,1,1};
+
 Rectangle *hoveredRecList = NULL;
+float recListDragDelta = 0.01f;
+bool recListToggleDelta = false;
 
 bool changesMade = false;
 std::string resultMessage;
@@ -348,6 +351,9 @@ int main(int argc, char* argv[]) {
 									
 									bool ceasePointer = false;
 									bool hoverCheck = false;
+									
+									ImGui::Checkbox("Fix Drag Delta to Grid Space", &recListToggleDelta);
+									ImGui::SliderFloat("Drag Delta", &recListDragDelta, 0.0f, (float) cfg.gridSpace);
 									ImGui::Combo("RecList Action", &cfg.currentRLA,
 											"Delete Rectangle\0"
 											"Edit Color of Rectangle\0"
@@ -396,7 +402,14 @@ int main(int argc, char* argv[]) {
 													//recs[i].shape.width,
 													//recs[i].shape.height);
 											ImGui::DragFloat4(TextFormat("##DRAG_REC_%d", i), &recs[i].shape.x, 
-														cfg.gridSpace != 0 ? (float) cfg.gridSpace : 0.001f
+														!recListToggleDelta ?
+															(
+																cfg.gridSpace != 0 ?
+																recListDragDelta :
+																0.001f
+															)
+															:
+															(float)cfg.gridSpace
 													);
 											if(ImGui::IsItemHovered()) {
 												hoveredRecList = &recs[i].shape;
