@@ -58,7 +58,8 @@ settings cfg = {
 	1,
 	0,
 	0,
-	{0,0,0,0,0,0,0}
+	1.0f,
+	{0,0,0,0,0,0,0,0,0,0}
 };
 
 
@@ -117,8 +118,10 @@ int main(int argc, char* argv[]) {
 
 		TraceLog(LOG_INFO, "Wave loading concluded");
 	#endif
-	raylib::Camera2D cam(raylib::Vector2(screenWidth/2,screenHeight/2), ply);
-    win.SetState(FLAG_WINDOW_RESIZABLE);
+	raylib::Camera2D cam(raylib::Vector2(screenWidth/2,screenHeight/2), ply); 
+	cam.zoom = cfg.camZoom;
+
+	win.SetState(FLAG_WINDOW_RESIZABLE);
 	win.SetMinSize(800,450);
 	SetWindowIcon(im);
     std::vector<RecBundle> recs;
@@ -419,7 +422,7 @@ int main(int argc, char* argv[]) {
 												ImGui::SameLine();
 												
 												if(recBothNeg(&recs[i].shape))
-													HelpMarker("Both Width and Height signs are negative.");
+													HelpMarker("Both Width and Height signs are negative. This may cause issues with certain features.");
 											}
 										}
 
@@ -617,7 +620,9 @@ int main(int argc, char* argv[]) {
 								ImGui::Checkbox("Save Middle Click Tool", &cfg.config[4]);
 								ImGui::Checkbox("Save Tool Main Menu", &cfg.config[6]);
 								ImGui::Checkbox("Save Grid Origin", &cfg.config[8]);
+								ImGui::Checkbox("Save current Cam Zoom", &cfg.config[9]);
 								if(ImGui::Button("Save Config to Default")) {
+									cfg.camZoom = cam.zoom;
 									saveConfig(&cfg);
 								}
 								ImGui::EndTabItem();

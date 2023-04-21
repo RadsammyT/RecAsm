@@ -33,8 +33,9 @@ struct settings {
 		bool showOrigin;
 		int currentMCT;
 		int currentRLA;
+		float camZoom;
 
-		bool config[9]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
+		bool config[10]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
 						// 0 = gridOffset
 						// 1 = gridSpace
 						// 2 = gridline
@@ -44,6 +45,7 @@ struct settings {
 						// 6 = toolMainMenu
 						// 7 = currentRLA
 						// 8 = showOrigin
+						// 9 = camZoom
 };
 
 
@@ -577,6 +579,13 @@ bool loadConfig(std::string config,
 				settings->config[8] = true;
 				settings->showOrigin = stoi(line);
 			}
+
+			if(line.starts_with("cam zoom ")) {
+				line.erase(0,9);
+				TraceLog(LOG_INFO, "Cam Zoom Found");
+				settings->config[9] = true;
+				settings->camZoom = stof(line);
+			}
 		}
 
 	} 
@@ -607,6 +616,8 @@ bool saveConfig(settings *cfg) {
 
 	if(cfg->config[8])
 		f << "grid_origin " << cfg->showOrigin << "\n";
+	if(cfg->config[9])
+		f << "cam zoom " << cfg->camZoom << "\n";
 	return false;
 }
 
