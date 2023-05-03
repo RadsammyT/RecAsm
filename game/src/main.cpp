@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 #include <time.h>
-#include <raygui.h>
 #include "extras.hpp"
 #include <stdexcept>
 #include <climits>
@@ -65,6 +64,9 @@ settings cfg = {
 	{0,0,0,0,0,0,0,0,0,0}
 };
 
+std::vector<RecBundle> recs;
+std::vector<RecBundle> undo;
+std::vector<Rectangle> overlap;
 
 int main(int argc, char* argv[]) {
 	InitAudioDevice();
@@ -127,9 +129,6 @@ int main(int argc, char* argv[]) {
 	win.SetState(FLAG_WINDOW_RESIZABLE);
 	win.SetMinSize(800,450);
 	SetWindowIcon(im);
-    std::vector<RecBundle> recs;
-	std::vector<RecBundle> undo;
-	std::vector<Rectangle> overlap;
 
 	int mouseJump = 1;
 
@@ -357,6 +356,7 @@ int main(int argc, char* argv[]) {
 									ImGui::Combo("RecList Action", &cfg.currentRLA,
 											"Delete Rectangle\0"
 											"Edit Color of Rectangle\0"
+											"Swap Rectangle Indexes\0"
 										);
 									switch(cfg.currentRLA) {
 										case RLA_DELETE:
@@ -367,6 +367,9 @@ int main(int argc, char* argv[]) {
 												if(ImGui::ColorEdit4("RecList Color", ImRecListColor, ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_AlphaBar)) {
 													recListColor = FloatP2RayColor(ImRecListColor);
 												}
+											break;
+										case RLA_SWAP:
+												ImGui::Text("TODO: this tool should swap indexes for 2 selected rectangles.");
 											break;
 
 									}
@@ -401,7 +404,7 @@ int main(int argc, char* argv[]) {
 													//recs[i].shape.y,
 													//recs[i].shape.width,
 													//recs[i].shape.height);
-											ImGui::DragFloat4(TextFormat("##DRAG_REC_%d", i), &recs[i].shape.x, 
+											if(ImGui::DragFloat4(TextFormat("##DRAG_REC_%d", i), &recs[i].shape.x, 
 														!recListToggleDelta ?
 															(
 																cfg.gridSpace != 0 ?
@@ -410,7 +413,9 @@ int main(int argc, char* argv[]) {
 															)
 															:
 															(float)cfg.gridSpace
-													);
+													)) {
+												overlap = getCollidingRectangles(recs);
+											}
 											if(ImGui::IsItemHovered()) {
 												hoveredRecList = &recs[i].shape;
 												hoverCheck = true;
@@ -521,7 +526,14 @@ int main(int argc, char* argv[]) {
 							if(ImGui::MenuItem("Keybind Help")) {
 								tinyfd_messageBox(
 									"Keybind Help",
-									"WASD: Move Camera (Left shift to move fast)\nLeft Click(& Drag): Create Rectangle\nRight Click: Delete Hovered Rectangle\nRight Shift: Highlight?? all rectangles w/ index\nC: Reset Zoom\nB: Toggle Info Menu\nR: Undo\nU: Redo",
+										"WASD: Move Camera (Left shift to move fast)\n"
+										"Left Click (& Drag): Create Rectangle\n"
+										"Right Click: Delete Rectangle\n"
+										"Right Shift: Highlight all rectangles w/ index\n"
+										"C: Reset Zoom\n"
+										"B: Toggle Info Menu\n"
+										"R: Undo\n"
+										"U: Redo",
 									"ok",
 									"info",
 									1		

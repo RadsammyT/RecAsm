@@ -70,6 +70,7 @@ enum RecListActions {
 	RLA_DELETE = 0,
 	RLA_COLOR,
 	RLA_MOVE,
+	RLA_SWAP,
 };
 
 inline bool recBothNeg(Rectangle *in) {
