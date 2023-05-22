@@ -7,6 +7,7 @@
 
 #define RESOURCE_USED 0
 #define RAYGUI_IMPLEMENTATION
+#define FRAMETIME_SIZE 100
 
 #include <raylib-cpp.hpp>
 #include <string>
@@ -21,8 +22,13 @@
 #include <res_header/small_icon.h>
 #include <res_header/load_sound_final.h>
 #include "rayImGui/rlImGui.h"
+#include <deque>
 
 const std::string rayver = RAYLIB_VERSION;
+std::vector<float> frameTimes;
+float FT_MIN = 16.6f;
+float FT_MAX = 17.0f;
+float FT_DRAG = 0.01f;
 
 int screenWidth = 800*1;
 int screenHeight = 450*1;
@@ -38,6 +44,8 @@ float ImRecListColor[4] = {1,1,1,1};
 Rectangle *hoveredRecList = NULL;
 float recListDragDelta = 0.01f;
 bool recListToggleDelta = false;
+
+int recListSwap = 0;
 
 bool changesMade = false;
 std::string resultMessage;
@@ -63,6 +71,7 @@ settings cfg = {
 	1.0f,
 	{0,0,0,0,0,0,0,0,0,0}
 };
+int mouseJump = 1;
 
 std::vector<RecBundle> recs;
 std::vector<RecBundle> undo;
@@ -129,8 +138,6 @@ int main(int argc, char* argv[]) {
 	win.SetState(FLAG_WINDOW_RESIZABLE);
 	win.SetMinSize(800,450);
 	SetWindowIcon(im);
-
-	int mouseJump = 1;
 
     bool prevInput = false; //previous LMB input. false = not down, true = down
 							//bool rapidFire = false; // if color picking slides or increments by 1
@@ -336,6 +343,7 @@ int main(int argc, char* argv[]) {
 								}
 
 								if(ImGui::BeginTabItem("Perf")) {
+
 										ImGui::Text("FPS: %f", 1/GetFrameTime());
 										ImGui::Text("FT (ms): %f", GetFrameTime()*1000);
 										ImGui::Text("FT - 1/60 (ns): %d",(int) ((GetFrameTime()-1.0f/60.0f)*1'000'000'000));
@@ -343,14 +351,30 @@ int main(int argc, char* argv[]) {
 											sample = (int) ((GetFrameTime()-1.0f/60.0f)*1'000'000'000);
 										}
 										ImGui::Text("Sample: %d", sample);
+										ImGui::Separator();
+										ImGui::PlotLines("Frametime Graph", &frameTimes[0], frameTimes.size(), 0, NULL, FT_MIN, FT_MAX);
+										ImGui::Text("FTG Size = %d", frameTimes.size());
+										ImGui::DragFloat("Scale Min", &FT_MIN, FT_DRAG);
+										ImGui::DragFloat("Scale Max", &FT_MAX, FT_DRAG);
+										ImGui::DragFloat("Scale Drag", &FT_DRAG, 0.001f);
 									ImGui::EndTabItem();
 								}
-
-								if(ImGui::BeginTabItem("Rec. List")) {
+								int warn = 0;
+								int error = 0;
+								for(RecBundle r: recs) {
+									if(r.shape.width == 0 || r.shape.height == 0) {
+										error++;
+									}
+									if(r.shape.width < 0 || r.shape.height < 0) {
+										warn++;
+									}
+								}
+								if(ImGui::BeginTabItem("Rec. List##RECLIST_TAB")) {
 									
 									bool ceasePointer = false;
 									bool hoverCheck = false;
-									
+									ImGui::Text("%d warns | %d errors", warn, error);
+									ImGui::Separator();
 									ImGui::Checkbox("Fix Drag Delta to Grid Space", &recListToggleDelta);
 									ImGui::SliderFloat("Drag Delta", &recListDragDelta, 0.0f, (float) cfg.gridSpace);
 									ImGui::Combo("RecList Action", &cfg.currentRLA,
@@ -358,6 +382,7 @@ int main(int argc, char* argv[]) {
 											"Edit Color of Rectangle\0"
 											"Swap Rectangle Indexes\0"
 										);
+									ImGui::Separator();
 									switch(cfg.currentRLA) {
 										case RLA_DELETE:
 												ImGui::Text("Click on button to delete");
@@ -369,10 +394,15 @@ int main(int argc, char* argv[]) {
 												}
 											break;
 										case RLA_SWAP:
-												ImGui::Text("TODO: this tool should swap indexes for 2 selected rectangles.");
+												if(ImGui::SliderInt("Swap With...", &recListSwap, 0, recs.size()-1)) {
+													if(recListSwap < 0 || recs.size() == 0) {
+														recListSwap = 0;
+													}
+												}
 											break;
 
 									}
+									ImGui::Separator();
 									for(int i = 0; i < recs.size(); i++) {
 										if(ImGui::Button(TextFormat("%d",i))) {
 																				
@@ -384,8 +414,15 @@ int main(int argc, char* argv[]) {
 													break;
 												
 												case RLA_COLOR:
-													//InfoBox("Unimplemented Function: RLA_COLOR in Rec List Switch case");
 														recs[i].color = recListColor;
+													break;
+												case RLA_SWAP:
+														if(recListSwap < 0 || recs.size() == 0)
+															break;
+														RecBundle temp;
+														temp = recs[i];
+														recs[i] = recs[recListSwap];
+														recs[recListSwap] = temp;
 													break;
 											}
 										} 
@@ -688,6 +725,11 @@ int main(int argc, char* argv[]) {
 				}
 			rlImGuiEnd();
         EndDrawing();
+
+		frameTimes.push_back(GetFrameTime() * 1'000);
+		if(frameTimes.size() > FRAMETIME_SIZE) {
+			frameTimes.erase(frameTimes.begin());
+		}
 	}
 
 	if(changesMade) {

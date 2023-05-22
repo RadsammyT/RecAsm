@@ -48,7 +48,6 @@ struct settings {
 						// 9 = camZoom
 };
 
-
 // Struct that handles all rectangles in working world
 struct RecBundle {
 	raylib::Rectangle shape;
@@ -69,7 +68,6 @@ enum MiddleClickTools {
 enum RecListActions {
 	RLA_DELETE = 0,
 	RLA_COLOR,
-	RLA_MOVE,
 	RLA_SWAP,
 };
 
