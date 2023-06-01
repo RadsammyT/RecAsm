@@ -17,7 +17,7 @@
 #define u64 unsigned long long int
 #define MAX 9
 #define HEIGHT 125
-#define REC_THRESHOLD 138000 / 2
+#define REC_THRESHOLD 15000
 #define MOVE_SPEED 4
 #define SPRINT_SPEED 10
 char const *fp[1] = {"*.RecAsm"};
@@ -34,8 +34,9 @@ struct settings {
 		int currentMCT;
 		int currentRLA;
 		float camZoom;
+		bool gridDrawOrder;
 
-		bool config[10]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
+		bool config[11]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
 						// 0 = gridOffset
 						// 1 = gridSpace
 						// 2 = gridline
@@ -46,6 +47,7 @@ struct settings {
 						// 7 = currentRLA
 						// 8 = showOrigin
 						// 9 = camZoom
+						// 10 = gridDrawOrder
 };
 
 // Struct that handles all rectangles in working world
@@ -203,6 +205,45 @@ void color3(raylib::Color in, raylib::Color* out) {
 	out->g = in.g;
 	out->b = in.b;
 	return;
+}
+
+void DrawGrid(settings* cfg, raylib::Camera2D* cam, int screenWidth, int screenHeight, float* factor, Color gridColor) {
+	if(cfg->showOrigin)
+		DrawCircleLines(0,0,10/cam->GetZoom(), RED);
+
+	if(cfg->gridSpace != 0 && cfg->gridLine) { 
+		int x = ((int)cam->GetTarget().x / cfg->gridSpace) * cfg->gridSpace;
+		int y = ((int)cam->GetTarget().y / cfg->gridSpace) * cfg->gridSpace;
+		//unsigned char zoomer = cam->zoom < 1 ? ftouc(255*cam->zoom) : 255;
+		unsigned char zoomer = getZoomTrans(&cam->zoom, &cfg->gridSpace, factor);
+		int gridLimit = (screenWidth/cfg->gridSpace/2+10) / cam->zoom;
+		for(int iter = -gridLimit; iter <= gridLimit; iter++) {
+			DrawLineV(
+					Vector2 { 
+						x + (iter * cfg->gridSpace) + cfg->gridOffset.x,
+						cam->GetTarget().y - screenHeight / cam->GetZoom() / 2
+						},
+					Vector2 { 
+						x + (iter*cfg->gridSpace) + cfg->gridOffset.x, 
+						cam->GetTarget().y + screenHeight / cam->GetZoom()
+						}, 
+					Color{gridColor.r, gridColor.g, gridColor.b, zoomer}
+					);
+		}
+		gridLimit = (screenHeight/cfg->gridSpace/2+10) / cam->zoom;
+		for(int iter = -gridLimit; iter <= gridLimit; iter++) {
+			DrawLineV(Vector2{cam->GetTarget().x - screenWidth / cam->GetZoom(),
+					y + (iter * cfg->gridSpace) + cfg->gridOffset.y},
+					Vector2{cam->GetTarget().x + screenWidth / cam->GetZoom(),
+					y + (iter * cfg->gridSpace) + cfg->gridOffset.y}, 
+					Color{gridColor.r, gridColor.g, gridColor.b, zoomer}
+					);
+		}
+		if(cfg->showOrigin) {
+			DrawLine(INT_MIN, 0, INT_MAX, 0, RED);
+			DrawLine(0, INT_MIN, 0, INT_MAX, RED);
+		}
+	}
 }
 
 u64 CountFileLines(std::string filename) {
@@ -710,20 +751,7 @@ bool loadFromFile(std::vector<RecBundle>* recs, std::string* resultMessage, std:
 			return false;
 	}
 
-	if(CountFileLines(file) > REC_THRESHOLD) {
-		if(
-				tinyfd_messageBox(
-						"WARNING: Large Rectangle Count!",
-						"The file you are trying to open has a very large amount of rectangles. Opening them may lead to performance issues.\n\nAre you sure you want open this file?",
-						"yesno",
-						"warning",
-						0
-					) == 0
-		) {
-			
-			return false;
-		}
-	}
+	
 
 	std::vector<RecBundle> newvec = {};
 	RecBundle newrb;
@@ -743,6 +771,23 @@ bool loadFromFile(std::vector<RecBundle>* recs, std::string* resultMessage, std:
 						1
 					);
 			return false;
+		}
+		int lineCount = CountFileLines(file);
+		if(lineCount > REC_THRESHOLD) {
+
+			char const* temp_message = TextFormat("The file you are trying to open has a very large amount of rectangles. Opening them may lead to performance issues.\nLine Count: %d\nAre you sure you want open this file?", lineCount);
+				if(
+						tinyfd_messageBox(
+								"WARNING: Large Rectangle Count!",
+								temp_message,
+								"yesno",
+								"warning",
+								0
+							) == 0
+				) {
+					
+					return false;
+				}
 		}
 		while(std::getline(f, line)) {
 			buf = ""; 

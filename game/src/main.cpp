@@ -40,7 +40,7 @@ float gridOffsetDI = 0.01f;
 float color[4] = {1,1,1,1}; // R G B A
 float ImOverlapColor[4] = {1,0,0,1};
 float ImRecListColor[4] = {1,1,1,1};
-
+float ImGridColor[4] = {1,1,1,1};
 Rectangle *hoveredRecList = NULL;
 float recListDragDelta = 0.01f;
 bool recListToggleDelta = false;
@@ -56,6 +56,7 @@ raylib::Color tc(LIGHTGRAY);
 raylib::Color workingColor(255,255,255,255);
 		Color overlapColor = {255,0,0,255};
 		Color recListColor = {255,255,255,255};
+		Color gridColor = {255,255,255,255};
 float factor = 1;
 
 settings cfg = {
@@ -69,6 +70,7 @@ settings cfg = {
 	0,
 	0,
 	1.0f,
+	0,
 	{0,0,0,0,0,0,0,0,0,0}
 };
 int mouseJump = 1;
@@ -204,7 +206,7 @@ int main(int argc, char* argv[]) {
 			if(IsKeyPressed(KEY_B))
 				InfoOn = !InfoOn;
 		}
-		#if 0 
+		#if 1 
         if(IsKeyPressed(KEY_M)) {
 			for(int i = 0; i < mouseJump * 1000; i++) {
 				recs.pop_back();
@@ -217,40 +219,11 @@ int main(int argc, char* argv[]) {
             ClearBackground(BLACK);
             cam.BeginMode(); //Drawing functions called during this point are drawn on world
 				cam.SetTarget(ply);
-				if(cfg.showOrigin)
-					DrawCircleLines(0,0,10/cam.GetZoom(), RED);
 
-				if(cfg.gridSpace != 0 && cfg.gridLine) { 
-					int x = ((int)cam.GetTarget().x / cfg.gridSpace) * cfg.gridSpace;
-					int y = ((int)cam.GetTarget().y / cfg.gridSpace) * cfg.gridSpace;
-					//unsigned char zoomer = cam.zoom < 1 ? ftouc(255*cam.zoom) : 255;
-					unsigned char zoomer = getZoomTrans(&cam.zoom, &cfg.gridSpace, &factor);
-					int gridLimit = (screenWidth/cfg.gridSpace/2+10) / cam.zoom;
-					for(int iter = -gridLimit; iter <= gridLimit; iter++) {
-						DrawLineV(
-								Vector2 { 
-									x + (iter * cfg.gridSpace) + cfg.gridOffset.x,
-									cam.GetTarget().y - screenHeight / cam.GetZoom() / 2
-									},
-								Vector2 { 
-									x + (iter*cfg.gridSpace) + cfg.gridOffset.x, 
-									cam.GetTarget().y + screenHeight / cam.GetZoom()
-									}, 
-								Color{130,130,130,zoomer}
-								);
-					}
-					gridLimit = (screenHeight/cfg.gridSpace/2+10) / cam.zoom;
-					for(int iter = -gridLimit; iter <= gridLimit; iter++) {
-						DrawLineV(Vector2{cam.GetTarget().x - screenWidth / cam.GetZoom(),
-								y + (iter * cfg.gridSpace) + cfg.gridOffset.y},
-								Vector2{cam.GetTarget().x + screenWidth / cam.GetZoom(),
-								y + (iter * cfg.gridSpace) + cfg.gridOffset.y}, Color{130,130,130,zoomer});
-					}
-					if(cfg.showOrigin) {
-						DrawLine(INT_MIN, 0, INT_MAX, 0, RED);
-						DrawLine(0, INT_MIN, 0, INT_MAX, RED);
-					}
-				}
+				// Draw Grid and Origin
+				// Draw Grid here if cfg.gridDrawOrder is false
+				if(!cfg.gridDrawOrder)
+					DrawGrid(&cfg, &cam, screenWidth, screenHeight, &factor, gridColor);
 				for(RecBundle rec: recs) {
 					rec.shape.Draw(rec.color);
 				}
@@ -259,6 +232,8 @@ int main(int argc, char* argv[]) {
 					DrawRectangleRec(rec, overlapColor);
 				}
 
+				if(cfg.gridDrawOrder)
+					DrawGrid(&cfg, &cam, screenWidth, screenHeight, &factor, gridColor);
 				mouse(&recs, &overlap, &prevInput, &heldMouse, &ply,&cam, &workingColor, color, &win, &undo, &cfg.gridSpace
 						,&cfg.gridOffset,&mouseJump, &cfg.currentMCT, io, &changesMade, &cfg.overlapHighlight);
 
@@ -451,6 +426,7 @@ int main(int argc, char* argv[]) {
 															:
 															(float)cfg.gridSpace
 													)) {
+												if(cfg.overlapHighlight)
 												overlap = getCollidingRectangles(recs);
 											}
 											if(ImGui::IsItemHovered()) {
@@ -621,6 +597,21 @@ int main(int argc, char* argv[]) {
 								}
 								ImGui::EndTabItem();
 							}
+
+							if(ImGui::BeginTabItem("Grid Color"))	{
+								if(ImGui::ColorPicker4("GColor", ImGridColor,
+											ImGuiColorEditFlags_AlphaBar |
+											ImGuiColorEditFlags_AlphaPreviewHalf)) {
+											//overlapColor = Color {
+												//ftouc(ImOverlapColor[0] * 255),
+												//ftouc(ImOverlapColor[1] * 255),
+												//ftouc(ImOverlapColor[2] * 255),
+												//ftouc(ImOverlapColor[3] * 255),
+											//};
+											gridColor = FloatP2RayColor(ImGridColor); 
+								}
+								ImGui::EndTabItem();
+							}
 							
 							ImGui::EndTabBar();					
 						}
@@ -651,6 +642,7 @@ int main(int argc, char* argv[]) {
 								
 								ImGui::Checkbox("Grid Outline", &cfg.gridLine);
 								ImGui::Checkbox("Grid Origin", &cfg.showOrigin);
+								ImGui::Checkbox("Draw Grid over Rectangles?", &cfg.gridDrawOrder);
 								ImGui::EndTabItem();
 							}
 							if(ImGui::BeginTabItem("Tools")) {
