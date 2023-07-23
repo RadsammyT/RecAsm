@@ -26,8 +26,9 @@ project (workspaceName)
 	files {"**.c", "**.cpp", "**.h", "**.hpp"}
 
 	includedirs { "./", "src", "include"}
-	
-	links {"Comdlg32", "ole32", "imm32"} -- Windows Libraries for TFD
+	if _TARGET_OS == "windows" then 
+		links {"Comdlg32", "ole32", "imm32"} -- Windows Libraries for TFD
+	end
 	link_to("tinyfiledialogs");
 	link_raylib();
 

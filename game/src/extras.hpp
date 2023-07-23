@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <string>
 #include <tinyfiledialogs.h>
+#include <climits>
 #include "rayImGui/imgui.h"
 
 #define u64 unsigned long long int
@@ -171,16 +172,16 @@ static void HelpMarker(const char* desc)
 
 
 
-float* RayColor2FloatP(Color base) {
-	float ret[4] = {
-		(float)base.r/255.0f,
-		(float)base.g/255.0f,
-		(float)base.b/255.0f,
-		(float)base.a/255.0f,
-	};
+//float* RayColor2FloatP(Color base) {
+//	float ret[4] = {
+//		(float)base.r/255.0f,
+//		(float)base.g/255.0f,
+//		(float)base.b/255.0f,
+//		(float)base.a/255.0f,
+//	};
 
-	return ret;
-}
+//	return ret;
+//}
 
 ImVec4 RayColor2ImVec(Color base) {
 	return ImVec4 {
