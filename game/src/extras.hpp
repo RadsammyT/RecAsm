@@ -36,7 +36,7 @@ struct settings {
 		int currentRLA;
 		float camZoom;
 		bool gridDrawOrder;
-
+		bool overrideGridTrans;
 		bool config[11]; // NOTE: CHANGE FOR EVERY AVAILABLE SETTING. USED FOR SAVING USER-DEFINED CONFIGS TO DEFAULT
 						// 0 = gridOffset
 						// 1 = gridSpace
@@ -228,7 +228,7 @@ void DrawGrid(settings* cfg, raylib::Camera2D* cam, int screenWidth, int screenH
 						x + (iter*cfg->gridSpace) + cfg->gridOffset.x, 
 						cam->GetTarget().y + screenHeight / cam->GetZoom()
 						}, 
-					Color{gridColor.r, gridColor.g, gridColor.b, zoomer}
+					Color{gridColor.r, gridColor.g, gridColor.b, cfg->overrideGridTrans ? gridColor.a : zoomer}
 					);
 		}
 		gridLimit = (screenHeight/cfg->gridSpace/2+10) / cam->zoom;
@@ -237,7 +237,7 @@ void DrawGrid(settings* cfg, raylib::Camera2D* cam, int screenWidth, int screenH
 					y + (iter * cfg->gridSpace) + cfg->gridOffset.y},
 					Vector2{cam->GetTarget().x + screenWidth / cam->GetZoom(),
 					y + (iter * cfg->gridSpace) + cfg->gridOffset.y}, 
-					Color{gridColor.r, gridColor.g, gridColor.b, zoomer}
+					Color{gridColor.r, gridColor.g, gridColor.b, cfg->overrideGridTrans ? gridColor.a : zoomer}
 					);
 		}
 		if(cfg->showOrigin) {

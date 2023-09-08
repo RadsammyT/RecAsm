@@ -5,6 +5,8 @@
  *	cuz std library sh*t lmao
  */ 
 
+#include "rayImGui/imgui.h"
+#include "raylib.h"
 #define RESOURCE_USED 0
 #define RAYGUI_IMPLEMENTATION
 #define FRAMETIME_SIZE 100
@@ -71,6 +73,7 @@ settings cfg = {
 	0,
 	1.0f,
 	0,
+	0,
 	{0,0,0,0,0,0,0,0,0,0}
 };
 int mouseJump = 1;
@@ -82,6 +85,7 @@ std::vector<Rectangle> overlap;
 int main(int argc, char* argv[]) {
 	InitAudioDevice();
     
+	SetWindowState(FLAG_WINDOW_HIGHDPI);
 	raylib::Window win(screenWidth, screenHeight, "Rectangle Assembler");
 	loadConfig("RecAsm.config", &cfg);
 	rlImGuiSetup(true);
@@ -134,7 +138,7 @@ int main(int argc, char* argv[]) {
 
 		TraceLog(LOG_INFO, "Wave loading concluded");
 	#endif
-	raylib::Camera2D cam(raylib::Vector2(screenWidth/2,screenHeight/2), ply); 
+	raylib::Camera2D cam(raylib::Vector2((float)screenWidth/2,(float)screenHeight/2), ply); 
 	cam.zoom = cfg.camZoom;
 
 	win.SetState(FLAG_WINDOW_RESIZABLE);
@@ -155,7 +159,7 @@ int main(int argc, char* argv[]) {
 		if(IsWindowResized()) {
 			screenHeight = GetScreenHeight();
 			screenWidth = GetScreenWidth();
-			cam.SetOffset(raylib::Vector2(screenWidth/2, screenHeight/2));
+			cam.SetOffset(raylib::Vector2((float)screenWidth/2, (float)screenHeight/2));
 		}
 
 		if(!io.WantCaptureKeyboard) {
@@ -301,7 +305,7 @@ int main(int argc, char* argv[]) {
 						ImGui::Checkbox("ImGui Demo", &ImDemoOn);
 						if(ImGui::BeginTabBar("info_tab_bar")) {
 								if(ImGui::BeginTabItem("Scene")) {
-										ImGui::Text("Rectangle Count: %d", recs.size());
+										ImGui::Text("Rectangle Count: %d", (int)recs.size());
 										ImGui::Text("Mouse X (World): %f", cam.GetScreenToWorld(GetMousePosition()).x);
 										ImGui::Text("Mouse Y (World): %f", cam.GetScreenToWorld(GetMousePosition()).y);
 										ImGui::Text("Cam X (World): %f", cam.target.x);
@@ -311,7 +315,7 @@ int main(int argc, char* argv[]) {
 								}
 
 								if(ImGui::BeginTabItem("Build")) {
-										ImGui::Text("C++ Standard: %d", __cplusplus);
+										ImGui::Text("C++ Standard: %d", (int)__cplusplus);
 										ImGui::Text("Raylib Ver: %s", rayver.c_str());
 										ImGui::Text("Build Time: %s %s", __DATE__, __TIME__); // macros are defined on preprocessor run
 									ImGui::EndTabItem();
@@ -328,7 +332,7 @@ int main(int argc, char* argv[]) {
 										ImGui::Text("Sample: %d", sample);
 										ImGui::Separator();
 										ImGui::PlotLines("Frametime Graph", &frameTimes[0], frameTimes.size(), 0, NULL, FT_MIN, FT_MAX);
-										ImGui::Text("FTG Size = %d", frameTimes.size());
+										ImGui::Text("FTG Size = %d", (int)frameTimes.size());
 										ImGui::DragFloat("Scale Min", &FT_MIN, FT_DRAG);
 										ImGui::DragFloat("Scale Max", &FT_MAX, FT_DRAG);
 										ImGui::DragFloat("Scale Drag", &FT_DRAG, 0.001f);
@@ -643,6 +647,7 @@ int main(int argc, char* argv[]) {
 								ImGui::Checkbox("Grid Outline", &cfg.gridLine);
 								ImGui::Checkbox("Grid Origin", &cfg.showOrigin);
 								ImGui::Checkbox("Draw Grid over Rectangles?", &cfg.gridDrawOrder);
+								ImGui::Checkbox("Override Grid transparency?", &cfg.overrideGridTrans);
 								ImGui::EndTabItem();
 							}
 							if(ImGui::BeginTabItem("Tools")) {
